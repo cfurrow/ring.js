@@ -100,9 +100,15 @@ function declare(_) {
             var c = mro[0];
             var super_proto = buildProto(_.rest(mro));
             var prototype = {};
-            _.each(c.__properties__, function(m, key) {
+            var props = c.__properties__;
+            var wrap = true;
+            if (typeof(c.__properties__) === "function") {
+                props = c.__properties__(super_proto);
+                wrap = false;
+            }
+            _.each(props, function(m, key) {
                 prototype[key] = m;
-                if (typeof m !== "function" || ! fnTest.test(m))
+                if (! wrap || typeof m !== "function" || ! fnTest.test(m))
                     return;
                 var sup = super_proto ? super_proto[key] : undefined;
                 if (! typeof sup === "function")

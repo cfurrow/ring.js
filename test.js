@@ -143,3 +143,22 @@ test("exceptions", function() {
         ok(ring.instance(e, ring.ValueError));
     }
 });
+
+test("optimized", function() {
+    var A = ring.create(function($super) {
+        return {
+            init: function(name) {
+                $super.init.call(this);
+                this.name = name;
+            }
+        };
+    });
+    var B = ring.create([A], function($super) {
+        return {
+            init: function() {
+                $super.init.call(this, "Gerard");
+            }
+        };
+    });
+    equal(new B().name, "Gerard");
+});
