@@ -148,7 +148,7 @@ test("optimized", function() {
     var A = ring.create(function($super) {
         return {
             init: function(name) {
-                $super.init.call(this);
+                $super.call(this);
                 this.name = name;
             }
         };
@@ -156,7 +156,7 @@ test("optimized", function() {
     var B = ring.create([A], function($super) {
         return {
             init: function() {
-                $super.init.call(this, "Gerard");
+                $super.call(this, "Gerard");
             }
         };
     });
