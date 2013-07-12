@@ -118,7 +118,7 @@ function declare(_) {
                         var tmp = this.$super;
                         this.$super = sup;
                         var ret = meth.apply(this, arguments);
-                        this.$super = tmp;
+                        this.$super = tmp === undefined ? null : tmp;
                         return ret;
                     };
                 })(m, sup);
@@ -131,13 +131,9 @@ function declare(_) {
         };
         var prototype = buildProto(__mro__);
         // create real class
-        var claz = (function(init) {
-            function Instance() {
-                this.$super = null;
-                init.apply(this, arguments);
-            };
-            return Instance;
-        })(prototype.init);
+        var claz = function Instance() {
+            this.init.apply(this, arguments);
+        };
         __mro__[0] = claz;
         claz.__mro__ = __mro__;
         claz.parents = parents;
