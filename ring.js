@@ -94,38 +94,36 @@ function declare(_) {
         toMerge = toMerge.concat([parents]);
         var __mro__ = [{__properties__: props}].concat(mergeMro(toMerge));
         //generate prototype
-        var prototype = {};
-        var keys = {};
-        _.each(__mro__, function(c) {
-            _.each(c.__properties__, function(v, k) {
-                keys[k] = true;
-            });
-        });
-        var getProperty = function(mro, key) {
+        var buildProto = function(mro) {
             if (mro.length === 0)
                 return undefined;
             var c = mro[0];
-            if (c.__properties__[key] === undefined)
-                return getProperty(_.rest(mro), key);
-            var p = c.__properties__[key];
-            if (typeof p !== "function" || ! fnTest.test(p))
-                return p;
-            var sup = getProperty(_.rest(mro), key);
-            if (! typeof sup === "function")
-                return p;
-            return (function(sup) {
-                return function() {
-                    var tmp = this.$super;
-                    this.$super = sup;
-                    var ret = p.apply(this, arguments);
-                    this.$super = tmp;
-                    return ret;
-                };
-            })(sup);
+            var super_proto = buildProto(_.rest(mro));
+            var prototype = {};
+            _.each(c.__properties__, function(m, key) {
+                prototype[key] = m;
+                if (typeof m !== "function" || ! fnTest.test(m))
+                    return;
+                var sup = super_proto ? super_proto[key] : undefined;
+                if (! typeof sup === "function")
+                    return;
+                prototype[key] = (function(sup) {
+                    return function() {
+                        var tmp = this.$super;
+                        this.$super = sup;
+                        var ret = m.apply(this, arguments);
+                        this.$super = tmp;
+                        return ret;
+                    };
+                })(sup);
+            });
+            _.each(super_proto, function(m, key) {
+                if (prototype[key] === undefined)
+                    prototype[key] = m;
+            });
+            return prototype;
         };
-        _.each(keys, function(v, k) {
-            prototype[k] = getProperty(__mro__, k);
-        });
+        prototype = buildProto(__mro__);
         // create real class
         var claz = function Instance() {
             this.$super = null;
