@@ -118,7 +118,7 @@ function declare(_) {
                         var tmp = this.$super;
                         this.$super = sup;
                         var ret = meth.apply(this, arguments);
-                        this.$super = tmp === undefined ? null : tmp;
+                        this.$super = tmp;
                         return ret;
                     };
                 })(m, sup);
