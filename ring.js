@@ -113,15 +113,15 @@ function declare(_) {
                 var sup = super_proto ? super_proto[key] : undefined;
                 if (! typeof sup === "function")
                     return;
-                prototype[key] = (function(sup) {
+                prototype[key] = (function(meth, sup) {
                     return function() {
                         var tmp = this.$super;
                         this.$super = sup;
-                        var ret = m.apply(this, arguments);
+                        var ret = meth.apply(this, arguments);
                         this.$super = tmp;
                         return ret;
                     };
-                })(sup);
+                })(m, sup);
             });
             _.each(super_proto, function(m, key) {
                 if (prototype[key] === undefined)
@@ -129,12 +129,15 @@ function declare(_) {
             });
             return prototype;
         };
-        prototype = buildProto(__mro__);
+        var prototype = buildProto(__mro__);
         // create real class
-        var claz = function Instance() {
-            this.$super = null;
-            this.init.apply(this, arguments);
-        };
+        var claz = (function(init) {
+            function Instance() {
+                this.$super = null;
+                init.apply(this, arguments);
+            };
+            return Instance;
+        })(prototype.init);
         __mro__[0] = claz;
         claz.__mro__ = __mro__;
         claz.parents = parents;
