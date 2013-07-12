@@ -131,10 +131,13 @@ function declare(_) {
         };
         var prototype = buildProto(__mro__);
         // create real class
-        var claz = function Instance() {
-            this.$super = null;
-            this.init.apply(this, arguments);
-        };
+        var claz = (function(init) {
+            function Instance() {
+                this.$super = null;
+                init.apply(this, arguments);
+            };
+            return Instance;
+        })(prototype.init);
         __mro__[0] = claz;
         claz.__mro__ = __mro__;
         claz.parents = parents;
