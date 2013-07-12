@@ -94,32 +94,29 @@ function declare(_) {
         toMerge = toMerge.concat([parents]);
         var __mro__ = [{__properties__: props}].concat(mergeMro(toMerge));
         //generate prototype
-        var buildClass = function(mro) {
+        var has_super = false;
+        var has_init = false;
+        var buildProto = function(mro) {
             if (mro.length === 0)
                 return {};
             var c = mro[0];
-            var super_class = buildClass(_.rest(mro));
+            var super_proto = buildProto(_.rest(mro));
             var prototype = {};
             var props = c.__properties__;
             var optimized = false;
             if (typeof(c.__properties__) === "function") {
-                props = c.__properties__(super_class);
-                if (props.init === undefined) {
-                    props.init = (function(sup) {
-                        return function Instance() {
-                            sup.apply(this, arguments);
-                        };
-                    })(super_class.prototype.init);
-                }
+                props = c.__properties__(super_proto);
                 optimized = true;
             }
+            has_init = props.init !== undefined;
             _.each(props, function(m, key) {
                 prototype[key] = m;
                 if (optimized || typeof m !== "function" || ! fnTest.test(m))
                     return;
-                var sup = super_class.prototype[key];
+                var sup = super_proto[key];
                 if (! typeof sup === "function")
                     return;
+                has_super = true;
                 prototype[key] = (function(meth, sup) {
                     return function() {
                         var tmp = this.$super;
@@ -130,25 +127,26 @@ function declare(_) {
                     };
                 })(m, sup);
             });
-            _.each(super_class.prototype, function(m, key) {
+            _.each(super_proto, function(m, key) {
                 if (prototype[key] === undefined)
                     prototype[key] = m;
             });
-            var claz = optimized ? prototype.init : (function(init) {
-                return function Instance() {
-                    this.$super = null;
-                    init.apply(this, arguments);
-                };
-            })(prototype.init);
-            claz.prototype = prototype;
-            return claz;
+            return prototype;
         };
         // create real class
-        var claz = buildClass(__mro__);
+        var prototype = buildProto(__mro__);
+        // creates the constructor, uses init() if possible
+        var claz = ! has_super && has_init ? prototype.init : (function(init) {
+            return function Instance() {
+                this.$super = null;
+                init.apply(this, arguments);
+            };
+        })(prototype.init);
         __mro__[0] = claz;
         claz.__mro__ = __mro__;
         claz.parents = parents;
         claz.__properties__ = props;
+        claz.prototype = prototype;
         claz.prototype.$class = claz;
         claz.__class_id__ = id;
         // construct classes index
