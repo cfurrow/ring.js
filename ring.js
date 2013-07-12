@@ -131,7 +131,7 @@ function declare(_) {
         };
         var prototype = buildProto(__mro__);
         // create real class
-        var claz = (function(init) {
+        var claz = typeof(props) === "function" ? prototype.init : (function(init) {
             function Instance() {
                 this.$super = null;
                 init.apply(this, arguments);
